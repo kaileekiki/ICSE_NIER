@@ -1,0 +1,44 @@
+{
+  "dataset": "SWE-bench-Live/MultiLang",
+  "revision": "3638632e8153a10ca422c1022bed79023084b5c9",
+  "source_files": [
+    {
+      "split": "cs",
+      "url": "https://huggingface.co/datasets/SWE-bench-Live/MultiLang/resolve/3638632e8153a10ca422c1022bed79023084b5c9/data/cs-00000-of-00001.parquet",
+      "sha256": "29ffe16d0b2cd802e753262b8b0d7fe3f2bb1b489396da238146e79f37937c1f",
+      "rows": 136
+    },
+    {
+      "split": "go",
+      "url": "https://huggingface.co/datasets/SWE-bench-Live/MultiLang/resolve/3638632e8153a10ca422c1022bed79023084b5c9/data/go-00000-of-00001.parquet",
+      "sha256": "76d2b5dff0f3fac8303d30fa85495539e487d25974ad7c21cd21a545cb4756e2",
+      "rows": 138
+    },
+    {
+      "split": "java",
+      "url": "https://huggingface.co/datasets/SWE-bench-Live/MultiLang/resolve/3638632e8153a10ca422c1022bed79023084b5c9/data/java-00000-of-00001.parquet",
+      "sha256": "00387685808c71d21ada175335304b1c118859453afadd58ea21a00b0d568ee8",
+      "rows": 160
+    },
+    {
+      "split": "js",
+      "url": "https://huggingface.co/datasets/SWE-bench-Live/MultiLang/resolve/3638632e8153a10ca422c1022bed79023084b5c9/data/js-00000-of-00001.parquet",
+      "sha256": "bc6ec49ffaf9db97840d55eba6954fae8f5fb0fb071cf49e187f36ffadd55a7a",
+      "rows": 108
+    },
+    {
+      "split": "rust",
+      "url": "https://huggingface.co/datasets/SWE-bench-Live/MultiLang/resolve/3638632e8153a10ca422c1022bed79023084b5c9/data/rust-00000-of-00001.parquet",
+      "sha256": "02ac78e2c51a84eb174ac393bb07b77478f1f96cf260af18835a711dd8074ebc",
+      "rows": 171
+    },
+    {
+      "split": "ts",
+      "url": "https://huggingface.co/datasets/SWE-bench-Live/MultiLang/resolve/3638632e8153a10ca422c1022bed79023084b5c9/data/ts-00000-of-00001.parquet",
+      "sha256": "7e23783e27230c9cfab1035690035c25523043d6af635bc78da3fd2010c32714",
+      "rows": 111
+    }
+  ],
+  "records_extracted": 10,
+  "all_test_patch_hashes_match_pilot": true
+}
