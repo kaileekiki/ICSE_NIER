@@ -1,0 +1,149 @@
+name: Official grading-impact replay
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/official-replay.yml"
+      - "ci/**"
+      - "replay/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  EVALUATOR_SHA: 62d02936a0726fbf4597b05bd07b09fb99eddae6
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  docker-environment:
+    name: Verify Ubuntu 24.04 Docker environment
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture runner and Docker evidence
+        run: |
+          mkdir -p results/environment
+          uname -a | tee results/environment/uname.txt
+          cat /etc/os-release | tee results/environment/os-release.txt
+          env | sort | tee results/environment/environment.txt
+          docker version | tee results/environment/docker-version.txt
+          docker info | tee results/environment/docker-info.txt
+          docker run --rm hello-world | tee results/environment/hello-world.txt
+          df -h | tee results/environment/disk.txt
+      - name: Upload environment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-environment-${{ github.run_attempt }}
+          path: results/environment
+          retention-days: 7
+
+  priority-rqlite:
+    name: "Priority FULL then gated ablations: rqlite"
+    needs: docker-environment
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    outputs:
+      reproduced: ${{ steps.verdict.outputs.reproduced }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned official evaluator
+        run: |
+          git clone https://github.com/microsoft/SWE-bench-Live.git evaluator
+          git -C evaluator checkout --detach "$EVALUATOR_SHA"
+          python3 -m venv evaluator/.venv
+          evaluator/.venv/bin/pip install --disable-pip-version-check -e evaluator
+      - name: Run FULL and conditionally TARGETED/SHAM
+        run: python3 ci/run_replay.py --instance-id rqlite__rqlite-2197 --mode priority --evaluator evaluator --results-root results
+      - name: Expose reproduction gate
+        id: verdict
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, pathlib
+          p=pathlib.Path('results/rqlite__rqlite-2197/summary.json')
+          ok=p.exists() and json.loads(p.read_text()).get('full_verdict_reproduced') is True
+          print(f'reproduced={str(ok).lower()}')
+          PY
+      - name: Upload all raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: priority-rqlite-${{ github.run_attempt }}
+          path: results/rqlite__rqlite-2197
+          retention-days: 7
+
+  priority-gh-aw:
+    name: "Priority FULL then gated ablations: gh-aw"
+    needs: docker-environment
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    outputs:
+      reproduced: ${{ steps.verdict.outputs.reproduced }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned official evaluator
+        run: |
+          git clone https://github.com/microsoft/SWE-bench-Live.git evaluator
+          git -C evaluator checkout --detach "$EVALUATOR_SHA"
+          python3 -m venv evaluator/.venv
+          evaluator/.venv/bin/pip install --disable-pip-version-check -e evaluator
+      - name: Run FULL and conditionally TARGETED/SHAM
+        run: python3 ci/run_replay.py --instance-id github__gh-aw-23870 --mode priority --evaluator evaluator --results-root results
+      - name: Expose reproduction gate
+        id: verdict
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, pathlib
+          p=pathlib.Path('results/github__gh-aw-23870/summary.json')
+          ok=p.exists() and json.loads(p.read_text()).get('full_verdict_reproduced') is True
+          print(f'reproduced={str(ok).lower()}')
+          PY
+      - name: Upload all raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: priority-gh-aw-${{ github.run_attempt }}
+          path: results/github__gh-aw-23870
+          retention-days: 7
+
+  extended-full:
+    name: "Extended FULL: ${{ matrix.instance_id }}"
+    needs: [priority-rqlite, priority-gh-aw]
+    if: needs.priority-rqlite.outputs.reproduced == 'true' && needs.priority-gh-aw.outputs.reproduced == 'true'
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        instance_id:
+          - nearai__ironclaw-6724
+          - codeceptjs__CodeceptJS-5109
+          - TypeCellOS__BlockNote-2629
+          - Azure__azure-mcp-609
+          - opendataloader-project__opendataloader-pdf-386
+          - remotion-dev__remotion-5529
+          - mikro-orm__mikro-orm-7464
+          - gsd-build__get-shit-done-2107
+    runs-on: ubuntu-24.04
+    timeout-minutes: 220
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned official evaluator
+        run: |
+          git clone https://github.com/microsoft/SWE-bench-Live.git evaluator
+          git -C evaluator checkout --detach "$EVALUATOR_SHA"
+          python3 -m venv evaluator/.venv
+          evaluator/.venv/bin/pip install --disable-pip-version-check -e evaluator
+      - name: Run official FULL replay
+        run: python3 ci/run_replay.py --instance-id "${{ matrix.instance_id }}" --mode full-only --evaluator evaluator --results-root results
+      - name: Upload all raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extended-${{ matrix.instance_id }}-${{ github.run_attempt }}
+          path: results/${{ matrix.instance_id }}
+          retention-days: 7

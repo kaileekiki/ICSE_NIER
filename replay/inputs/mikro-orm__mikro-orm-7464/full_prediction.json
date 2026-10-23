@@ -1,0 +1,5 @@
+{
+  "mikro-orm__mikro-orm-7464": {
+    "model_patch": "diff --git a/packages/core/src/utils/EntityComparator.ts b/packages/core/src/utils/EntityComparator.ts\nindex 7b81203..5cf2ba8 100644\n--- a/packages/core/src/utils/EntityComparator.ts\n+++ b/packages/core/src/utils/EntityComparator.ts\n@@ -643,7 +643,12 @@ export class EntityComparator {\n               // object for JSON embeddable\n               (p.object || p.persist !== false),\n           )\n-          .map(childProp => {\n+          .flatMap(childProp => {\n+            if (childProp.kind === ReferenceKind.EMBEDDED && !childProp.object) {\n+              return meta.props\n+                .filter(p => p.embedded?.[0] === childProp.name && p.kind !== ReferenceKind.EMBEDDED && (p.object || p.persist !== false))\n+                .map(leafProp => `${padding}  ret${this.wrap(leafProp.name)} = null;`);\n+            }\n             const childDataKey =\n               meta.embeddable || prop.object ? dataKey + this.wrap(childProp.embedded![1]) : this.wrap(childProp.name);\n             return `${padding}  ret${childDataKey} = null;`;\n"
+  }
+}
